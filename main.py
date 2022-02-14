@@ -84,14 +84,14 @@ def batch_optimize(input_dir: str):
     batch = list()
 
     for i, thread in enumerate(threads):
-        if len(batch) < num_threads:
-            batch.append(thread)
-        elif len(batch) == num_threads or i == len(threads):
+        if len(batch) == num_threads or i == len(threads) - 1:
             for b in batch:
                 b.start()
             for b in batch:
                 b.join()
             batch = list()
+        elif len(batch) < num_threads:
+            batch.append(thread)
 
 
 if __name__ == '__main__':
