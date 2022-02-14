@@ -3,6 +3,7 @@ import os
 import os.path
 import shutil
 import subprocess
+from threading import Thread
 
 
 def get_ghostscript_path():
@@ -41,8 +42,8 @@ def compress_file(input_file_path: str, output_file_path: str, power: int = 2):
                     '-dDetectDuplicateImages=true',
                     '-dDownsampleColorImages=true', '-dDownsampleGrayImages=true',
                     '-dDownsampleMonoImages=true',
-                    '-dColorImageResolution=200', '-dGrayImageResolution=150',
-                    '-dMonoImageResolution=150',
+                    '-dColorImageResolution=200', '-dGrayImageResolution=200',
+                    '-dMonoImageResolution=200',
                     '-dDoThumbnails=false',
                     '-dCreateJobTicket=false',
                     '-dPreserveEPSInfo=false',
@@ -69,14 +70,24 @@ def batch_optimize(input_dir: str):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    for pdffile in os.listdir(input_dir):
-        if not pdffile.endswith("pdf"):
-            continue
-        compress_file(
-            os.path.join(input_dir, pdffile),
-            os.path.join(output_dir, pdffile)
-        )
+    threads = [Thread(target=compress_file, args=(
+        os.path.join(input_dir, pdffile),
+        os.path.join(output_dir, pdffile)
+    )) for pdffile in os.listdir(input_dir)]
+
+    num_threads = 7
+    batch = list()
+
+    for thread in threads:
+        if len(batch) < num_threads:
+            batch.append(thread)
+        elif len(batch) == num_threads:
+            for b in batch:
+                b.start()
+            for b in batch:
+                b.join()
+            batch = list()
 
 
 if __name__ == '__main__':
-    batch_optimize('/projects/certificates_11.02/001')
+    batch_optimize('/projects/certificates')
