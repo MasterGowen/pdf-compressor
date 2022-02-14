@@ -31,6 +31,10 @@ def compress_file(input_file_path: str, output_file_path: str, power: int = 2):
         4: '/screen'
     }
 
+    color_image_resolution = 200
+    gray_image_resolution = 200
+    mono_image_resolution = 200
+
     gs = get_ghostscript_path()
     initial_size = os.path.getsize(input_file_path)
     subprocess.run([gs, '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.5',
@@ -42,8 +46,9 @@ def compress_file(input_file_path: str, output_file_path: str, power: int = 2):
                     '-dDetectDuplicateImages=true',
                     '-dDownsampleColorImages=true', '-dDownsampleGrayImages=true',
                     '-dDownsampleMonoImages=true',
-                    '-dColorImageResolution=200', '-dGrayImageResolution=200',
-                    '-dMonoImageResolution=200',
+                    f'-dColorImageResolution={color_image_resolution}',
+                    f'-dGrayImageResolution={gray_image_resolution}',
+                    f'-dMonoImageResolution={mono_image_resolution}',
                     '-dDoThumbnails=false',
                     '-dCreateJobTicket=false',
                     '-dPreserveEPSInfo=false',
@@ -78,10 +83,10 @@ def batch_optimize(input_dir: str):
     num_threads = 7
     batch = list()
 
-    for thread in threads:
+    for i, thread in enumerate(threads):
         if len(batch) < num_threads:
             batch.append(thread)
-        elif len(batch) == num_threads:
+        elif len(batch) == num_threads or i == len(threads):
             for b in batch:
                 b.start()
             for b in batch:
